@@ -1,0 +1,49 @@
+h1 {
+  color: purple;
+  font-family: monospace;
+  text-transform: uppercase;
+}
+
+.connect-button {
+  display: flex;
+  justify-content: end;
+}
+
+.main-center {
+  font-family: monospace;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.mintable-table {
+  width: 100%;
+  text-align: right;
+  & td {
+    padding-bottom: .25em;
+  }
+  & tr > *:first-child {
+    text-align: left;
+  }
+}
+
+@-webkit-keyframes rotating {
+  from {
+    -webkit-transform: rotate(0deg);
+  }
+  to {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+.rotating {
+  -webkit-animation: rotating .5s linear infinite;
+}
+
+.char {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
