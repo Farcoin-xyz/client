@@ -14,7 +14,7 @@ export const scanMints = async params => {
 }
 
 export const signMints = async params => {
-  const response = await axios.get(`${HOST}/sign`, { params });
+  const response = await axios.post(`${HOST}/sign`, params);
   return response.data.results;
 }
 
