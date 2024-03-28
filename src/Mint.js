@@ -153,16 +153,16 @@ const Mint = () => {
       </div>
       <div className="main-center">
         <h1>Farcoin</h1>
-        <p>Farcoins are social tokens built on top of the Farcaster protocol. If someone Likes your content on Farcaster, you can mint one of their Farcoins.</p>
+        <h2>A protocol for social tokens on Farcaster</h2>
+        <p>A Like from the right person can be worth more than a thousand Likes from others. Yet today, Likes are reduced to a single number. </p>
+        <p>With Farcoin, each user has own currency, called a fide. People can mint each other’s fides whenever they receive Likes from them.</p>
         <div>
           Links:&nbsp;&nbsp;
           <a target="_blank" href="https://warpcast.com/~/channel/farcoin">Warpcast</a>
           &nbsp;&nbsp;
-          <a target="_blank" href="https://basescan.org/address/0xEcB5DF8f302706bC0a8F383904b67663b886a9e1">Contract</a>
-          &nbsp;&nbsp;
           <a target="_blank" href="https://github.com/Farcoin-xyz">Github</a>
         </div>
-        <p>If you have been using Farcaster, you likely have Farcoins to mint. Discover them below by connecting a wallet linked to your Farcaster account.</p>
+        <p>If you have been casting Farcaster, you likely have fides to mint. Discover them below by connecting a wallet linked to your Farcaster account.</p>
         <p>Recent Likes may not appear immediately.</p>
         <div>
           <button disabled={scanningMints} onClick={address ? authAndScan : connectWallet}>
@@ -201,7 +201,7 @@ const Mint = () => {
                 <table className="mintable-table">
                   <thead>
                     <tr>
-                      <th>Recent&nbsp;Likes</th>
+                      <th>User</th>
                       <th>Last&nbsp;Liked</th>
                       <th></th>
                     </tr>
