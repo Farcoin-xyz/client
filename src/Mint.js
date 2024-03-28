@@ -3,7 +3,7 @@ import { ConnectKitButton } from "connectkit";
 import { useAccount, useConnect, useContractWrite, useSignMessage } from "wagmi";
 import { prettyAge } from "./utils";
 import * as api from "./api";
-import frcAbi from "./frc-abi.json"
+import oracleAbi from "./oracle-abi.json"
 
 const Mint = () => {
   const [mints, setMints] = useState({
@@ -83,14 +83,14 @@ const Mint = () => {
 
   useEffect(() => {
     if (writeError) {
-      window.alert(writeError.message.split("\n")[0]);
+      window.alert(writeError.message.split("\n\n")[0]);
       setMintingFid(0);
     }
   }, [writeError]);
 
   useEffect(() => {
     if (signError) {
-      window.alert(signError.message.split("\n")[0]);
+      window.alert(signError.message.split("\n\n")[0]);
       setScanningMints(false);
     }
   }, [signError]);
@@ -124,9 +124,9 @@ const Mint = () => {
     setMintingFid(fid);
     api.signMints({ likerFid: fid }).then(result => {
       writeContract({
-        address: "0xEcB5DF8f302706bC0a8F383904b67663b886a9e1",
-        abi: frcAbi,
-        functionName: "mint",
+        address: "0xb8aD07dbE01d04CeF759202F06aF1a8F9ffEEba8",
+        abi: oracleAbi,
+        functionName: "verifyAndMint",
         args: result.mintArguments,
       });
     });
