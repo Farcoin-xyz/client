@@ -1,6 +1,6 @@
 import React, {useEffect} from "react";
-import { Web3Provider } from "./Web3Provider";
-import Mint from "./Mint";
+import { Web3Provider } from "./Web3Provider.jsx";
+import Mint from "./Mint.jsx";
 
 import {
   BrowserRouter as Router,

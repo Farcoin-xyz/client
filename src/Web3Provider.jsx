@@ -13,12 +13,12 @@ const config = createConfig(
     transports: {
       // RPC URL for each chain
       [base.id]: http(
-        "https://base.publicnode.com",
+        "https://base-rpc.publicnode.com",
       ),
     },
 
     // Required API Keys
-    walletConnectProjectId: "390c9947a2e2ce942088081c0f47c8c8",
+    walletConnectProjectId: "5e766149a621dd06699c3f8a5b11f871",
 
     // Required App Info
     appName: "Farcoin",

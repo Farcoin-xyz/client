@@ -75,23 +75,23 @@ const Mint = () => {
         setCustomAddress(result.user.address);
         scanMints(result.user.address);
       }).catch(e => {
-        window.alert(e.message);
         setScanningMints(false);
+        // window.alert(e.message);
       });
     }
   }, [signStatus]);
 
   useEffect(() => {
     if (writeError) {
-      window.alert(writeError.message.split("\n\n")[0]);
       setMintingFid(0);
+      // window.alert(writeError.message.split("\n\n")[0]);
     }
   }, [writeError]);
 
   useEffect(() => {
     if (signError) {
-      window.alert(signError.message.split("\n\n")[0]);
       setScanningMints(false);
+      // window.alert(signError.message.split("\n\n")[0]);
     }
   }, [signError]);
 
@@ -116,7 +116,7 @@ const Mint = () => {
       setScanningMints(false);
     }).catch(e => {
       setScanningMints(false);
-      window.alert(e.message);
+      // window.alert(e.message);
     });
   };
 
@@ -124,7 +124,7 @@ const Mint = () => {
     setMintingFid(fid);
     api.signMints({ likerFid: fid }).then(result => {
       writeContract({
-        address: "0xb8aD07dbE01d04CeF759202F06aF1a8F9ffEEba8",
+        address: "0x9e78abe45f351257fc7242856a3d4329fcc34722",
         abi: oracleAbi,
         functionName: "verifyAndMint",
         args: result.mintArguments,
@@ -221,7 +221,7 @@ const Mint = () => {
                           {
                             isAuthenticated && address && customAddress.toLowerCase() === address.toLowerCase() && (
                               <button
-                                disabled={(!!mintingFid) || (fidLastLikeTime[fid] === fidLastMintTime[fid])}
+                                disabled={(!!mintingFid) || (fidLastLikeTime[fid] <= fidLastMintTime[fid])}
                                 onClick={() => mint(fid)}
                               >
                                 {
