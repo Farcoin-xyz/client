@@ -1,33 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { ConnectKitButton } from "connectkit";
-import { useAccount, useConnect, useContractWrite, useSignMessage } from "wagmi";
+import { useAccount, useContractWrite } from "wagmi";
 import { prettyAge } from "./utils";
 import * as api from "./api";
 import oracleAbi from "./oracle-abi.json"
 
 const Mint = () => {
-  const [mints, setMints] = useState({
+  const initialState = {
     fidLastLikeTime: {},
     fidLastMintTime: {},
     fidLikes: {},
     fidNames: {},
     FIDs: [],
     count: 0,
-  });
-  const [scanningMints, setScanningMints] = useState(false);
+  };
+
+  const [mints, setMints] = useState(Object.assign({}, initialState));
+  const [scanningRecentLikes, setScanningRecentLikes] = useState(false);
+  const [scanningUserLikes, setScanningUserLikes] = useState(false);
   const [mintingFid, setMintingFid] = useState(0);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [customAddress, setCustomAddress] = useState("");
+  const [handle, setHandle] = useState("");
+  const [searching, setIsSearching] = useState(false);
+  const [singleMintArgs, setSingleMintArgs] = useState(null);
 
-  const { connect } = useConnect();
   const { address } = useAccount();
-
-  const {
-    data: signedMessage,
-    status: signStatus,
-    error: signError,
-    signMessage,
-  } = useSignMessage();
 
   const {
     data: hash,
@@ -35,21 +32,6 @@ const Mint = () => {
     error: writeError,
     writeContract,
   } = useContractWrite();
-
-  useEffect(() => {
-    api.getSession().then((result) => {
-      setIsAuthenticated(!!result.user.address);
-    });
-  }, []);
-
-  useEffect(() => {
-    // User disconnects address - End session
-    if (isAuthenticated && !address) {
-      api.endSession().then((result) => {
-        setIsAuthenticated(false);
-      });
-    }
-  }, [address, isAuthenticated]);
 
   useEffect(() => {
     if (writeStatus === "error") {
@@ -64,77 +46,63 @@ const Mint = () => {
   }, [writeStatus]);
 
   useEffect(() => {
-    if (signStatus === "error") {
-      setScanningMints(false);
-    } else if (signStatus === "success") {
-      api.startSession({
-        address,
-        signature: signedMessage,
-      }).then(result => {
-        setIsAuthenticated(true);
-        setCustomAddress(result.user.address);
-        scanMints(result.user.address);
-      }).catch(e => {
-        setScanningMints(false);
-        // window.alert(e.message);
-      });
-    }
-  }, [signStatus]);
-
-  useEffect(() => {
     if (writeError) {
       setMintingFid(0);
       // window.alert(writeError.message.split("\n\n")[0]);
     }
   }, [writeError]);
 
-  useEffect(() => {
-    if (signError) {
-      setScanningMints(false);
-      // window.alert(signError.message.split("\n\n")[0]);
-    }
-  }, [signError]);
-
-  const authAndScan = () => {
-    setScanningMints(true);
-    if (isAuthenticated && address) {
-      setCustomAddress(address);
-      scanMints(address);
-    } else {
-      api.getSessionCode().then(result => {
-        console.log(`Authenticating on Farcoin.xyz\n\nCode: ${result.code}`);
-        signMessage({ message: `Authenticating on Farcoin.xyz\n\nCode: ${result.code}` });
-      });
-    }
-  };
-
-  const scanMints = (address) => {
-    setScanningMints(true);
+  const scanMints = () => {
+    setSingleMintArgs(null);
+    setScanningRecentLikes(true);
     api.scanMints({ address }).then(result => {
       console.log(result);
       setMints(result);
-      setScanningMints(false);
+      setScanningRecentLikes(false);
     }).catch(e => {
-      setScanningMints(false);
+      setScanningRecentLikes(false);
       // window.alert(e.message);
+    });
+  };
+
+  const signAndMint = async (fid) => {
+    setMintingFid(fid);
+    const { mintArguments } = await api.signMints({ likerFid: fid, likedAddress: address }); 
+    writeContract({
+      address: "0x9e78abe45f351257fc7242856a3d4329fcc34722",
+      abi: oracleAbi,
+      functionName: "verifyAndMint",
+      args: mintArguments,
     });
   };
 
   const mint = (fid) => {
     setMintingFid(fid);
-    api.signMints({ likerFid: fid }).then(result => {
-      writeContract({
-        address: "0x9e78abe45f351257fc7242856a3d4329fcc34722",
-        abi: oracleAbi,
-        functionName: "verifyAndMint",
-        args: result.mintArguments,
-      });
+    writeContract({
+      address: "0x9e78abe45f351257fc7242856a3d4329fcc34722",
+      abi: oracleAbi,
+      functionName: "verifyAndMint",
+      args: singleMintArgs,
     });
   };
 
   const connectWallet = () => {
     // Lol
     document.getElementById("connect-button").children[0].children[0].click();
+  };
+
+  const searchForUser = async () => {
+    try {      
+      setScanningUserLikes(true);
+      setMints(Object.assign({}, initialState));
+      const user = await api.searchUser({ query: handle.replace('@', '') });
+      const { mintArguments } = await api.signMints({ likerFid: user.fid, likedAddress: address }); 
+      setSingleMintArgs(mintArguments);
+      setScanningUserLikes(false);
+    } catch (e) {
+      console.log(e);
+      setScanningRecentLikes(false);
+    }
   };
 
   const {
@@ -146,57 +114,73 @@ const Mint = () => {
     count,
   } = mints;
 
+  console.log(singleMintArgs);
+
   return (
     <div>
-      <div className="connect-button" id="connect-button">
-        <ConnectKitButton id="btn" />
-      </div>
       <div className="main-center">
-        <h1>Farcoin</h1>
-        <h2>A protocol for social tokens on Farcaster</h2>
-        <p>A Like from the right person can be worth more than a thousand Likes from others. Yet today, Likes are reduced to a single number. </p>
-        <p>With Farcoin, each user has own currency, called a fide. People can mint each other’s fides whenever they receive Likes from them.</p>
-        <div>
-          Links:&nbsp;&nbsp;
-          <a target="_blank" href="https://warpcast.com/~/channel/farcoin">Warpcast</a>
-          &nbsp;&nbsp;
-          <a target="_blank" href="https://github.com/Farcoin-xyz">Github</a>
-        </div>
+        <br />
         <p>If you have been casting Farcaster, you likely have fides to mint. Discover them below by connecting a wallet linked to your Farcaster account.</p>
-        <p>Recent Likes may not appear immediately.</p>
+        <p>Most recent Likes may not appear immediately.</p>
         <div>
-          <button disabled={scanningMints} onClick={address ? authAndScan : connectWallet}>
-            {
-              scanningMints ? (
-                <span className="rotating char">◓</span>
-              ) : (
-                address ? (
-                  `${isAuthenticated ? "scan" : "auth & scan"}`
-                ) : "connect wallet"
-              )
-            }
-          </button>
           <br />
-          <br />
-          <input
-            type="text"
-            name="address"
-            placeholder="eth address"
-            value={customAddress}
-            onChange={(e) => setCustomAddress(e.target.value)}
-          />
-          {" "}
-          <button disabled={scanningMints} onClick={() => scanMints(customAddress)}>
-            scan (no auth)
-          </button>
           {
-            FIDs.length > 0 ? (
+            address ? (
+              <div style={{ display: "flex" }}>
+                <button disabled={scanningRecentLikes || scanningUserLikes} onClick={scanMints}>
+                  {
+                    scanningRecentLikes ? (
+                      <span className="rotating char">◓</span>
+                    ) : (
+                      "Fetch recent likes"
+                    )
+                  }
+                </button>
+                <span>&nbsp;&nbsp;or&nbsp;&nbsp;</span>
+                <input 
+                  type="text" 
+                  value={handle}
+                  disabled={scanningRecentLikes || scanningUserLikes}
+                  onChange={e => setHandle(e.target.value)} 
+                  style={{ flex: "1 0", maxWidth: "10em" }} 
+                  placeholder="Search @user" 
+                />
+                <button onClick={searchForUser} style={{ marginLeft: ".5em" }} disabled={scanningUserLikes || scanningRecentLikes}>
+                  {
+                    scanningUserLikes ? (
+                      <span className="rotating char">◓</span>
+                    ) : (
+                      'Search'
+                    )
+                  }
+                </button>
+              </div>
+            ) : (
               <div>
-                {
-                  !isAuthenticated && (
-                    "You are not authenticated. Please authenticate to mint"
-                  )
-                }
+                <ConnectKitButton id="btn-2" /> to get started
+              </div>
+            )
+          }
+          <br />
+          {
+            singleMintArgs ? (
+              <div>
+                <span>You have {singleMintArgs[4]} fide{singleMintArgs[4] != 1 ? 's' : ''} you can mint. </span>
+                <button onClick={mint} disabled={!!mintingFid}>
+                  {
+                    mintingFid ? (
+                      <span className="rotating char">◓</span>
+                    ) : (
+                      'mint'
+                    )
+                  }
+                </button>
+              </div>
+            ) : null
+          }
+          {
+            !singleMintArgs && FIDs.length > 0 ? (
+              <div>
                 <br />
                 <table className="mintable-table">
                   <thead>
@@ -212,30 +196,26 @@ const Mint = () => {
                         <tr id={fid}>
                           <td>
                             <a href={`https://warpcast.com/${fidNames[fid]}`}>{fidNames[fid]}</a>
-                            <span style={{ color: "grey" }}>(FID:{fid})</span>
+                            <span style={{ color: "grey" }}> (FID:{fid})</span>
                           </td>
                           <td>
                             {prettyAge(fidLastLikeTime[fid])}
                           </td>
                           <td>
-                          {
-                            isAuthenticated && address && customAddress.toLowerCase() === address.toLowerCase() && (
-                              <button
-                                disabled={(!!mintingFid) || (fidLastLikeTime[fid] <= fidLastMintTime[fid])}
-                                onClick={() => mint(fid)}
-                              >
-                                {
-                                  mintingFid === fid ? (
-                                    <span className="rotating char">◓</span>
-                                  ) : (
-                                    <span>
-                                      mint
-                                    </span>
-                                  )
-                                }
-                              </button>
-                            )
-                          }
+                          <button
+                            disabled={(!!mintingFid) || (fidLastLikeTime[fid] <= fidLastMintTime[fid])}
+                            onClick={() => signAndMint(fid)}
+                          >
+                            {
+                              mintingFid === fid ? (
+                                <span className="rotating char">◓</span>
+                              ) : (
+                                <span>
+                                  mint
+                                </span>
+                              )
+                            }
+                          </button>
                           </td>
                         </tr>
                       ))

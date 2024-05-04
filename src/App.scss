@@ -1,18 +1,17 @@
-h1 {
-  color: purple;
-  font-family: monospace;
-  text-transform: uppercase;
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #F9F8F6;
+  font-family: "Outfit", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+
 }
 
 .connect-button {
   display: flex;
   justify-content: end;
-}
-
-.main-center {
-  font-family: monospace;
-  max-width: 400px;
-  margin: 0 auto;
 }
 
 .mintable-table {
@@ -46,4 +45,45 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.nav-bar {
+  background-color: #C962A0;
+  display: flex;
+  color: white; 
+  padding: 0 1em;
+  align-items: center;
+}
+.nav-bar a {
+  padding-right: 1em;
+  color: white;
+  text-decoration: none;
+}
+
+.home-header {
+  background-color: #C962A0;
+  color: white;
+  text-align: center;
+  border-bottom-left-radius: 100px;
+  border-bottom-right-radius: 100px;
+  padding: 100px 0;
+}
+
+.hero {
+  font-size: 300%;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.hero-subheader {
+  font-size: 150%;
+}
+
+.main-center {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.main-center h2 {
+  text-align: center;
+  font-weight: 500;
 }

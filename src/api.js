@@ -18,6 +18,11 @@ export const signMints = async params => {
   return response.data.results;
 }
 
+export const searchUser = async params => {
+  const response = await axios.post(`${HOST}/lookup-user`, params);
+  return response.data.results;
+}
+
 export const startSession = async (params) => {
   const response = await axios.post(`${HOST}/session/start`, params);
   return response.data.results;
@@ -35,5 +40,10 @@ export const getSessionCode = async () => {
 
 export const getSession = async params => {
   const response = await axios.get(`${HOST}/session`, { params });
+  return response.data.results;
+}
+
+export const getRecentMints = async params => {
+  const response = await axios.get(`${HOST}/mint/recent`, { params });
   return response.data.results;
 }
