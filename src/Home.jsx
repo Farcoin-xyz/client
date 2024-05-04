@@ -94,7 +94,7 @@ const Mint = () => {
     <div>
       <div className="home-header">
         <div className="hero">Turn Likes into Currency</div>
-        <div className="hero-subheader">???!!! is a protocol for <br />social tokens on Farcaster</div>
+        <div className="hero-subheader">Farcoin is a protocol for <br />social tokens on Farcaster</div>
       </div>
       <div className="main-center" style={{ paddingBottom: "3em" }}>
         <br />

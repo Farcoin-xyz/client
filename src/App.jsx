@@ -22,7 +22,7 @@ const App = () => {
           <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <div className="nav-bar" style={{ flex: '0 1' }}>
               <div style={{ flex: '1 0' }}>
-                <h1><Link to="/">???!!!</Link></h1>
+                <h1><Link to="/">Farcoin</Link></h1>
               </div>
               <Link to="/mint">
                 Mint
