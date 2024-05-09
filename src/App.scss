@@ -6,7 +6,6 @@ body {
   font-optical-sizing: auto;
   font-weight: 300;
   font-style: normal;
-
 }
 
 .connect-button {
@@ -51,7 +50,6 @@ body {
   background-color: #C962A0;
   display: flex;
   color: white; 
-  padding: 0 1em;
   align-items: center;
 }
 .nav-bar a {
@@ -60,9 +58,18 @@ body {
   text-decoration: none;
 }
 
+.nav-bar.footer {
+  width: 100%;
+  justify-content: center;
+  flex: 0 1;
+  padding: 1em 0;
+}
+.nav-bar.footer a, .nav-bar.footer a:hover {
+  font-weight: 300;
+}
+
 .home-header {
   background-color: #C962A0;
-  color: white;
   text-align: center;
   border-bottom-left-radius: 100px;
   border-bottom-right-radius: 100px;
@@ -70,20 +77,57 @@ body {
 }
 
 .hero {
+  color: white;
   font-size: 300%;
   font-weight: 700;
   margin-bottom: 20px;
 }
 .hero-subheader {
+  color: white;
   font-size: 150%;
+}
+.hero-search {
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.main-center-wrapper {
+  text-align: center;
+  padding: 1em 0;
 }
 
 .main-center {
   max-width: 600px;
+  min-width: 300px;
+  display: inline-block;
+  text-align: left;
   margin: 0 auto;
+  padding: 0 1em;
 }
 
 .main-center h2 {
   text-align: center;
   font-weight: 500;
+}
+
+.mint-connect-button > div:first-child {
+  display: inline-block;
+  font-weight: bold;
+}
+
+a, a:visited, a:hover {
+  text-decoration: none;
+  font-weight: bold;
+  color: inherit;
+}
+
+button {
+  background-color: #C962A0;
+  color: white;
+  font-family: inherit;
+  font-weight: bold;
+  padding: .5em 1em;
+  border: 0px;
+  border-radius: 500px;
+  cursor: pointer;
 }
