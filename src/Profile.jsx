@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ConnectKitButton } from "connectkit";
-import { useAccount, useContractWrite } from "wagmi";
+import { formatUnits } from "viem";
+import { useAccount, useContractWrite, useContractRead } from "wagmi";
 
 import oracleAbi from "./oracle-abi.json"
+import minterAbi from "./minter-abi.json"
+import fideAbi from "./fide-abi.json"
 import { prettyAge } from "./utils";
 import * as api from "./api";
 
@@ -16,16 +19,24 @@ const Profile = () => {
   const [mintingFid, setMintingFid] = useState(0);
   const [fideOwners, setFideOwners] = useState([]);
   const [fidesOwned, setFidesOwned] = useState([]);
+  const [verifications, setVerifications] = useState([]);
+  const [claiming, setClaiming] = useState(false);
 
   const { address } = useAccount();
+
+  const normalizedAddress = (address || '').toLowerCase();
+
+  const ownsProfile = verifications.filter(v => normalizedAddress == v.toLowerCase()).length > 0;
 
   useEffect(() => {
     setUsername(null);
     setFideOwners([]);
     setFidesOwned([]);
+    setVerifications([]);
     if (fid) {
       api.getUserByFid(fid).then((result) => {
         setUsername(result.username);
+        setVerifications(result.verifiedAddresses.eth_addresses);
       });
       api.getFideOwners({ fid }).then((result) => {
         setFideOwners(result);
@@ -43,35 +54,62 @@ const Profile = () => {
     writeContract,
   } = useContractWrite();
 
+  const { data: fideAddress, isError: fideError, isLoading: fideLoading }  = useContractRead({
+    address: '0x9d5CE03b73a2291f5E62597E6f27A91CA9129d97',
+    abi: minterAbi,
+    functionName: 'getFide',
+    args: [fid],
+  });
+
+  const { data: rewardBalance, isError: rewardError, isLoading: rewardLoading }  = useContractRead({
+    address: '0x9d5CE03b73a2291f5E62597E6f27A91CA9129d97',
+    abi: minterAbi,
+    functionName: 'getRewardBalance',
+    args: [fid],
+  });
+
+  const { data: fideBalance, isError: balanceError, isLoading: balanceLoading }  = useContractRead({
+    address: fideAddress,
+    abi: fideAbi,
+    functionName: 'balanceOf',
+    args: [fideAddress],
+  });
+
   useEffect(() => {
     if (writeStatus === "error") {
       console.log(writeError);
       setMintingFid(null);
+      setClaiming(false);
     } else if (writeStatus === "success") {
       setMintingFid(0);
+      setClaiming(false);
     }
   }, [writeStatus]);
 
   useEffect(() => {
     if (writeError) {
       setMintingFid(0);
+      setClaiming(false);
       // window.alert(writeError.message.split("\n\n")[0]);
     }
   }, [writeError]);
 
-
-  const signAndMint = async (fid) => {
-    setMintingFid(fid);
-    const { mintArguments } = await api.signMints({ likerFid: fid, likedAddress: address });
-    writeContract({
-      address: "0x9e78abe45f351257fc7242856a3d4329fcc34722",
-      abi: oracleAbi,
-      functionName: "verifyAndMint",
-      args: mintArguments,
-    });
+  const signAndClaim = async () => {
+    try {
+      setClaiming(true);
+      const { claimArguments } = await api.signClaims({ likerFid: fid, likerAddress: address });
+      writeContract({
+        address: "0x9e78abe45f351257fc7242856a3d4329fcc34722",
+        abi: oracleAbi,
+        functionName: "verifyAndClaim",
+        args: claimArguments,
+      });
+    } catch (e) {
+      setClaiming(false);
+    }
   };
 
-  const mint = (fid) => {
+  const mint = () => {
     setMintingFid(fid);
     writeContract({
       address: "0x9e78abe45f351257fc7242856a3d4329fcc34722",
@@ -117,50 +155,85 @@ const Profile = () => {
           ) : (
             <div>
               {
-                singleMintArgs ? (
+                ownsProfile ? (
+                  <div style={{ border: '1px solid #ddd', borderRadius: '10px', padding: '1em' }}>
+                    <div>
+                      <p style={{ fontWeight: 'bold' }}>Claimable fides: {formatUnits(fideBalance || 0n, 18)}</p>
+                      <p>Whenever someone mints your fides<br /> an additional 10% is reserved for you.</p>
+                      <p style={{ fontWeight: 'bold' }}>Claimable $FRC: {formatUnits(rewardBalance || 0n, 18)}</p>
+                      <p>You earn Farcoin&apos;s protocol token $FRC <br />whenever an FID mints your fides first.</p>
+                      {
+                        hash ? (
+                          <Link to={`https://basescan.org/tx/${hash}`} target="_blank">View&nbsp;transaction&nbsp;➚</Link>
+                        ) : (
+                          <button onClick={signAndClaim} disabled={claiming || fideBalance == 0n}>
+                            {
+                              claiming ? (
+                                <span className="rotating char">◓</span>
+                              ) : (
+                                'Claim'
+                              )
+                            }
+                          </button>
+                        )
+
+                      }
+                    </div>
+                  </div>
+                ) : (
                   <div>
-                    <span>🥳 You have <b>{singleMintArgs[4]} fide{singleMintArgs[4] != 1 ? 's' : ''}</b> to mint. </span>
                     {
-                      hash ? (
-                        <Link to={`https://basescan.org/tx/${hash}`} target="_blank">View&nbsp;transaction&nbsp;➚</Link>
-                      ) : (
-                        <button onClick={mint} disabled={!!mintingFid}>
+                      singleMintArgs ? (
+                        <div>
+                          <p>🥳 You have <b>{singleMintArgs[4]} fide{singleMintArgs[4] != 1 ? 's' : ''}</b> to mint. </p>
                           {
-                            mintingFid ? (
-                              <span className="rotating char">◓</span>
+                            hash ? (
+                              <Link to={`https://basescan.org/tx/${hash}`} target="_blank">View&nbsp;transaction&nbsp;➚</Link>
                             ) : (
-                              'mint'
+                              <button onClick={mint} disabled={!!mintingFid}>
+                                {
+                                  mintingFid ? (
+                                    <span className="rotating char">◓</span>
+                                  ) : (
+                                    'mint'
+                                  )
+                                }
+                              </button>
                             )
                           }
-                        </button>
+                        </div>
+                      ) : (
+                        <div>
+                          <p>Has {username ? `${username}` : `FID ${fid}`} liked your casts?</p>
+                          <p>If so, mint their fides below.</p>
+                          <button onClick={scanUserLikes} disabled={scanningUserLikes}>
+                            {
+                              scanningUserLikes ? (
+                                <span className="rotating char">◓</span>
+                              ) : (
+                                'Check eligibility'
+                              )
+                            }
+                          </button>
+                        </div>
                       )
                     }
                   </div>
-                ) : (
-                  <button onClick={scanUserLikes} disabled={scanningUserLikes}>
-                    {
-                      scanningUserLikes ? (
-                        <span className="rotating char">◓</span>
-                      ) : (
-                        'Mint fides'
-                      )
-                    }
-                  </button>
                 )
               }
             </div>
           )
         }
         <br />
-        <h3>Owners of {username ? `${username}'s fides` : `Fide ${fid}`}</h3>
+        <h3>Top minters</h3>
         {
           fideOwners.length > 0 ? (
             <div style={{ display: "inline-block", textAlign: "left" }}>
               {
                 fideOwners.map(fide => (
-                  <div id={`owned-${fide.fid}`}>
+                  <div key={`owners-${fide.liked_fid}`}>
                     <div style={{ display: 'block', marginBottom: '.5em' }}>
-                      <Link to={`/${fide.liker_fid}`}>@{fide.name}</Link> minted {fide.likes}
+                      <Link to={`/${fide.liked_fid}`}>@{fide.name}</Link> minted {fide.likes}
                     </div>
                   </div>
                 ))
@@ -171,15 +244,15 @@ const Profile = () => {
           )
         }
         <br />
-        <h3>Fides minted by {username ? `${username}` : `FID ${fid}`}:</h3>
+        <h3>{username ? `${username}` : `FID ${fid}`} minted</h3>
         {
           fidesOwned.length > 0 ? (
             <div style={{ display: "inline-block", textAlign: "left" }}>
               {
                 fidesOwned.map(fide => (
-                  <div id={`owned-${fide.fid}`}>
+                  <div key={`owned-${fide.liker_fid}`}>
                     <div style={{ display: 'block', marginBottom: '.5em' }}>
-                      {fide.likes} from <Link to={`/${fide.liker_fid}`}>@{fide.name}</Link>
+                      {fide.likes} of <Link to={`/${fide.liker_fid}`}>@{fide.name}</Link>
                     </div>
                   </div>
                 ))

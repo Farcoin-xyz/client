@@ -13,6 +13,11 @@ export const signMints = async params => {
   return response.data.result;
 }
 
+export const signClaims = async params => {
+  const response = await axios.post(`${HOST}/claim`, params);
+  return response.data.result;
+}
+
 export const searchUsers = async username => {
   const response = await axios.get(`${HOST}/search-users`, {params:{username}});
   return response.data.result;
@@ -20,11 +25,6 @@ export const searchUsers = async username => {
 
 export const getUserByUsername = async username => {
   const response = await axios.get(`${HOST}/user-by-username`, {params:{username}});
-  return response.data.result;
-}
-
-export const getUserByAddress = async address => {
-  const response = await axios.get(`${HOST}/user-by-address`, {params:{address}});
   return response.data.result;
 }
 

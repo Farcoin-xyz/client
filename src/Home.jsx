@@ -35,7 +35,7 @@ const Mint = () => {
   return (
     <div>
       <div className="home-header">
-        <div className="hero">🖤 ⤻ 🪙</div>
+        <div className="hero">♥️ ⤻ 🪙</div>
         <div className="hero-subheader">Farcoin is a protocol for <br />social tokens on Farcaster</div>
         <br />
         <br />
